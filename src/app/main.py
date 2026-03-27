@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
+
+from app.frost_api import hent_vaerdata
+from frcm.fireriskmodel import compute
 
 #oppretter selve web-applikasjonen
 app = FastAPI(title="Brannrisiko API", version="0.1.0")
@@ -13,6 +16,25 @@ def read_root():
 def health_check():
     return {"status": "healthy"}
 
+@app.get("/risk/{station_id}")
+def get_risk(station_id: str):
+    try:
+        #1. Hent værdata for stasjonen fra forst API
+        vaerdata = hent_vaerdata(station_id)
+
+        #Sjekk at vi faktisk fikk data
+        if not vaerdata.data:
+           raise HTTPException(status_code=404, detail="Ingen værdata funnet for denne stasjonen")
+
+        #2. beregn brannrisiko basert på frcm modellen
+        risk_prediction = compute(vaerdata)
+
+        #3. Retuner resyltatene (FastAPI gjør dette automatisk om til json
+        
+        return risk_prediction
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
-    
+
