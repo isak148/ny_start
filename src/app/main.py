@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 
 from app.frost_api import hent_vaerdata
-from frcm.fireriskmodel import compute
+from frcm.fireriskmodel.compute import compute
 
 #oppretter selve web-applikasjonen
 app = FastAPI(title="Brannrisiko API", version="0.1.0")
