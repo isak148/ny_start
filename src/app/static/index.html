@@ -22,23 +22,66 @@
 
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
+            <div class="flex justify-between h-20 items-center"> <div class="flex items-center gap-2">
                     <i class="fa-solid fa-fire text-red-500 text-2xl"></i>
                     <span class="font-bold text-xl tracking-tight gradient-text">FireGuard</span>
                 </div>
+                
                 <div class="flex items-center gap-4">
-                    <div id="userInfo" class="hidden text-sm font-semibold text-slate-600">
-                        Innlogget som: <span id="displayUsername" class="text-indigo-600"></span>
+                    <div id="guestInfo" class="text-sm text-slate-500">
+                        Viser standard: <span class="font-semibold text-slate-700">Bergen (Florida)</span>
                     </div>
-                    <div id="loginForm" class="flex items-center gap-2">
-                        <input type="text" id="usernameInput" placeholder="Brukernavn (f.eks. Isak)" class="border border-slate-300 rounded px-3 py-1 text-sm focus:outline-none focus:border-indigo-500">
-                        <button onclick="loginUser()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded text-sm font-medium transition-colors">Logg inn</button>
+
+                    <div id="userInfo" class="hidden text-sm font-semibold text-slate-600 flex items-center gap-3">
+                        <i class="fa-solid fa-user text-indigo-400"></i>
+                        Innlogget som: <span id="displayUsername" class="text-indigo-600"></span>
+                        <button onclick="logoutUser()" class="text-xs text-slate-400 hover:text-red-500">Logg ut</button>
+                    </div>
+
+                    <div id="authForms" class="flex flex-col items-end gap-1">
+                        
+                        <div id="loginForm" class="flex items-center gap-2">
+                            <input type="text" id="usernameInput" placeholder="Brukernavn" class="border border-slate-300 rounded px-3 py-1 text-sm focus:outline-none focus:border-indigo-500 w-40">
+                            <button onclick="loginUser()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded text-sm font-medium transition-colors">Logg inn</button>
+                        </div>
+                        
+                        <div id="authToggles" class="text-xs text-slate-500">
+                            <span id="toRegisterText">Ny bruker? <a href="#" onclick="showRegisterForm()" class="text-indigo-600 hover:underline">Registrer deg</a></span>
+                            <span id="toLoginText" class="hidden">Har du bruker? <a href="#" onclick="showLoginForm()" class="text-indigo-600 hover:underline">Logg inn</a></span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
+
+    <div id="registerModal" class="fixed inset-0 bg-slate-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-8 w-full max-w-md relative">
+            <button onclick="showLoginForm()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            <h2 class="text-2xl font-bold mb-6 text-indigo-700">Opprett ny bruker</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Brukernavn *</label>
+                    <input type="text" id="regUsername" placeholder="F.eks. Isak99" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">E-post * (Påkrevet for varslinger)</label>
+                    <input type="email" id="regEmail" placeholder="din.epost@eksempel.no" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Passord *</label>
+                    <input type="password" id="regPassword" placeholder="Minimum 6 tegn" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Standard stasjon ID</label>
+                    <input type="text" id="regStation" placeholder="F.eks. SN18700 (Valgfritt)" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+                
+                <button onclick="registerUser()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold text-lg transition-colors mt-6">Registrer og Logg inn</button>
+            </div>
+        </div>
+    </div>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="alertBox" class="hidden mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm" role="alert">
@@ -51,8 +94,8 @@
                 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 class="text-lg font-semibold mb-2">Valgt Stasjon</h2>
-                    <div class="text-3xl font-bold text-slate-800 mb-1" id="currentStation">Ikke valgt</div>
-                    <p class="text-sm text-slate-500 mb-6">Status: <span id="stationStatus" class="font-medium text-slate-700">Venter på innlogging...</span></p>
+                    <div class="text-3xl font-bold text-slate-800 mb-1" id="currentStation">Bergen (Florida)</div>
+                    <p class="text-sm text-slate-500 mb-6">Status: <span id="stationStatus" class="font-medium text-slate-700">Laster...</span></p>
 
                     <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Siste Brannrisiko</h3>
                     <div class="flex items-end gap-2">
@@ -74,7 +117,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-lg font-semibold">Utvikling siste 24 timer</h2>
-                        <button onclick="fetchRiskData()" id="refreshBtn" class="text-slate-400 hover:text-indigo-600 transition-colors" disabled>
+                        <button onclick="fetchRiskData()" id="refreshBtn" class="text-slate-400 hover:text-indigo-600 transition-colors">
                             <i class="fa-solid fa-arrows-rotate"></i> Oppdater
                         </button>
                     </div>
@@ -90,7 +133,63 @@
 
     <script>
         let myChart = null;
-        let currentStationId = null;
+        let currentStationId = 'SN50540'; // Standard: Bergen (Florida)
+        let authenticated = false;
+
+        // --- OPPSTART: VIS BERGEN STANDARD ---
+        window.onload = async () => {
+            hideAlert();
+            await fetchRiskData(currentStationId);
+        };
+
+        // --- REGISTRERING (Fase 4 NY) ---
+        async function registerUser() {
+            // Hent verdier fra skjema
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            let station = document.getElementById('regStation').value.trim() || 'SN18700'; // Standard til Blindern hvis tomt
+
+            // Validering
+            if (!username || !email || !password) return showAlert("Brukernavn, E-post og Passord er påkrevet!");
+            if (password.length < 6) return showAlert("Passordet må være minst 6 tegn.");
+
+            // Bygg JSON-objektet som API-et forventer
+            const newUser = {
+                username: username,
+                email: email,
+                password: password, // NB: Sendes i klartekst her, senere bør det hashes på frontend/backend!
+                default_station: station,
+                favorites: station // Legger standardstasjonen som første favoritt
+            };
+
+            try {
+                // 1. Send POST-request til FastAPI for å opprette brukeren
+                const response = await fetch('/users/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newUser)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || "Kunne ikke opprette bruker.");
+                }
+
+                const createdUser = await response.json();
+                console.log("Bruker opprettet:", createdUser);
+
+                // 2. Logg inn automatisk med den nye brukeren
+                showLoginForm(); // Skjul modal
+                document.getElementById('usernameInput').value = username; // Fyll inn i login-feltet
+                await loginUser(); // Kjør login-funksjonen
+                
+                showAlert(`Gratulerer ${username}! Brukeren er opprettet og du er logget inn.`, 'success');
+
+            } catch (error) {
+                showAlert(error.message);
+            }
+        }
 
         // --- AUTENTISERING & BRUKERDATA ---
         async function loginUser() {
@@ -98,30 +197,50 @@
             if (!username) return showAlert("Skriv inn et brukernavn.");
 
             try {
-                // 1. Hent data fra FastAPI (via databasen)
                 const response = await fetch(`/users/${username}`);
-                if (!response.ok) throw new Error("Fant ikke brukeren. Har du opprettet profilen i /docs?");
+                if (!response.ok) throw new Error("Fant ikke brukeren. Dobbeltsjekk navnet eller registrer deg.");
                 
                 const user = await response.json();
                 
-                // 2. Oppdater UI
-                document.getElementById('loginForm').classList.add('hidden');
+                authenticated = true;
+                document.getElementById('authForms').classList.add('hidden');
+                document.getElementById('guestInfo').classList.add('hidden');
                 document.getElementById('userInfo').classList.remove('hidden');
                 document.getElementById('displayUsername').innerText = user.username;
-                document.getElementById('refreshBtn').disabled = false;
 
-                // 3. Sett stasjoner og bygg favoritt-listen
                 currentStationId = user.default_station;
+                document.getElementById('currentStation').innerText = currentStationId; // Oppdaterer fra "Bergen"
                 renderFavorites(user.favorites);
                 
                 hideAlert();
-                
-                // 4. Hent værdata og brannrisiko!
                 await fetchRiskData(currentStationId);
 
             } catch (error) {
                 showAlert(error.message);
             }
+        }
+
+        function logoutUser() {
+            authenticated = false;
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('authForms').classList.remove('hidden');
+            document.getElementById('guestInfo').classList.remove('hidden');
+            document.getElementById('usernameInput').value = '';
+            
+            // Tilbakestill til Bergen (Florida)
+            currentStationId = 'SN50540';
+            document.getElementById('currentStation').innerText = "Bergen (Florida)";
+            document.getElementById('favoritesList').innerHTML = '<li class="text-sm text-slate-500 italic">Logg inn for å se favoritter.</li>';
+            fetchRiskData(currentStationId);
+        }
+
+        // --- UI TOGGLES ---
+        function showRegisterForm() {
+            document.getElementById('registerModal').classList.remove('hidden');
+        }
+
+        function showLoginForm() {
+            document.getElementById('registerModal').classList.add('hidden');
         }
 
         // --- FAVORITTER ---
@@ -142,7 +261,6 @@
                     <span class="font-medium text-slate-700">${stasjon}</span>
                     <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
                 `;
-                // Gjør at man kan klikke på en favoritt for å bytte stasjon
                 li.onclick = () => fetchRiskData(stasjon);
                 list.appendChild(li);
             });
@@ -151,22 +269,25 @@
         // --- BRANNRISIKO (API) ---
         async function fetchRiskData(stationId = currentStationId) {
             if (!stationId) return;
-            currentStationId = stationId;
+            
+            // Hvis vi bytter stasjon fra favoritter, oppdaterer vi UI
+            if (stationId !== currentStationId) {
+                currentStationId = stationId;
+                document.getElementById('currentStation').innerText = stationId;
+            }
 
-            document.getElementById('currentStation').innerText = stationId;
-            document.getElementById('stationStatus').innerText = "Henter data...";
+            document.getElementById('stationStatus').innerText = "Henter ferske data...";
             document.getElementById('stationStatus').classList.remove('text-red-500', 'text-green-600');
             document.getElementById('stationStatus').classList.add('text-slate-700');
-            document.getElementById('currentTTF').innerText = "...";
+            document.getElementById('currentTTF').innerText = "--";
 
             try {
-                // Sender forespørsel til FastAPI som snakker med Frost og kjører frcm-modellen
                 const response = await fetch(`/risk/${stationId}`);
                 const data = await response.json();
 
                 if (data.error) throw new Error(data.error.detail || data.error);
 
-                document.getElementById('stationStatus').innerText = "Oppdatert akkurat nå";
+                document.getElementById('stationStatus').innerText = authenticated ? "Oppdatert akkurat nå" : "Standard oversikt (Gjest)";
                 document.getElementById('stationStatus').classList.replace('text-slate-700', 'text-green-600');
                 
                 const firerisks = data.firerisks;
@@ -177,15 +298,16 @@
                 hideAlert();
 
             } catch (error) {
-                document.getElementById('stationStatus').innerText = "Feil ved henting";
+                document.getElementById('stationStatus').innerText = "Kunne ikke hente data";
                 document.getElementById('stationStatus').classList.replace('text-slate-700', 'text-red-500');
-                showAlert(error.message);
+                showAlert(`Feil for ${stationId}: ${error.message}`);
+                // Tegn tom graf ved feil
+                if (myChart) myChart.destroy();
             }
         }
 
         // --- CHART.JS GRAF ---
         function updateChart(firerisks) {
-            // Hent ut klokkeslett (labels) og TTF (data) fra modellen
             const labels = firerisks.map(r => {
                 const date = new Date(r.timestamp);
                 return date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
@@ -194,10 +316,8 @@
 
             const ctx = document.getElementById('ttfChart').getContext('2d');
             
-            // Slett den gamle grafen hvis den finnes, før vi tegner en ny
             if (myChart) myChart.destroy();
 
-            // Settes opp med styling inspirert av koden din
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -243,9 +363,21 @@
         }
 
         // --- HJELPEFUNKSJONER ---
-        function showAlert(msg) {
+        function showAlert(msg, type = 'error') {
             const alertBox = document.getElementById('alertBox');
-            document.getElementById('alertText').innerText = msg;
+            const alertText = document.getElementById('alertText');
+            alertText.innerText = msg;
+            
+            if (type === 'success') {
+                alertBox.classList.replace('bg-red-100', 'bg-green-100');
+                alertBox.classList.replace('border-red-500', 'bg-green-500');
+                alertBox.classList.replace('text-red-700', 'text-green-700');
+            } else {
+                alertBox.classList.replace('bg-green-100', 'bg-red-100');
+                alertBox.classList.replace('bg-green-500', 'border-red-500');
+                alertBox.classList.replace('text-green-700', 'text-red-700');
+            }
+            
             alertBox.classList.remove('hidden');
         }
 
