@@ -3,73 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brannrisiko Overvåkning</title>
+    <title>FireGuard | Intelligent Cloud Safety</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { color: #d9534f; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-        button { background-color: #0275d8; color: white; border: none; cursor: pointer; font-size: 16px; border-radius: 4px; }
-        button:hover { background-color: #025aa5; }
-        .risk-box { margin-top: 20px; padding: 15px; border-left: 5px solid #d9534f; background-color: #fdf2f2; display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800">
 
-<div class="container">
-    <h1>🔥 Brannrisiko Overvåkning</h1>
-    
-    <div id="login-section">
-        <p>Skriv inn brukernavnet ditt for å se brannfaren for din stasjon:</p>
-        <input type="text" id="usernameInput" placeholder="F.eks. Isak">
-        <button onclick="hentBrukerData()">Logg inn / Hent data</button>
-    </div>
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-fire text-red-500 text-2xl"></i>
+                    <span class="font-bold text-xl tracking-tight gradient-text">FireGuard</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="userInfo" class="hidden text-sm font-semibold text-slate-600">
+                        Innlogget som: <span id="displayUsername" class="text-indigo-600"></span>
+                    </div>
+                    <div id="loginForm" class="flex items-center gap-2">
+                        <input type="text" id="usernameInput" placeholder="Brukernavn (f.eks. Isak)" class="border border-slate-300 rounded px-3 py-1 text-sm focus:outline-none focus:border-indigo-500">
+                        <button onclick="loginUser()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded text-sm font-medium transition-colors">Logg inn</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div id="result-section" class="risk-box">
-        <h2 id="station-name">Stasjon: Laster...</h2>
-        <p><strong>Siste beregnede brannfare (TTF):</strong> <span id="ttf-value">Laster...</span> timer</p>
-    </div>
-</div>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="alertBox" class="hidden mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm" role="alert">
+            <p id="alertText" class="font-medium"></p>
+        </div>
 
-<script>
-    // JavaScript som snakker med din FastAPI-server!
-    async function hentBrukerData() {
-        const username = document.getElementById("usernameInput").value;
-        if (!username) return alert("Skriv inn et brukernavn!");
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 class="text-lg font-semibold mb-2">Valgt Stasjon</h2>
+                    <div class="text-3xl font-bold text-slate-800 mb-1" id="currentStation">Ikke valgt</div>
+                    <p class="text-sm text-slate-500 mb-6">Status: <span id="stationStatus" class="font-medium text-slate-700">Venter på innlogging...</span></p>
 
-        try {
-            // 1. Hent brukerens data fra databasen
-            const userResponse = await fetch(`/users/${username}`);
-            if (!userResponse.ok) {
-                alert("Fant ikke brukeren. Har du opprettet den i API-et?");
+                    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Siste Brannrisiko</h3>
+                    <div class="flex items-end gap-2">
+                        <span id="currentTTF" class="text-5xl font-extrabold gradient-text">--</span>
+                        <span class="text-lg font-medium text-slate-500 mb-1">timer TTF</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 class="text-lg font-semibold mb-4"><i class="fa-solid fa-star text-yellow-400 mr-2"></i>Dine Favoritter</h2>
+                    <ul id="favoritesList" class="space-y-2">
+                        <li class="text-sm text-slate-500 italic">Logg inn for å se favoritter.</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold">Utvikling siste 24 timer</h2>
+                        <button onclick="fetchRiskData()" id="refreshBtn" class="text-slate-400 hover:text-indigo-600 transition-colors" disabled>
+                            <i class="fa-solid fa-arrows-rotate"></i> Oppdater
+                        </button>
+                    </div>
+                    
+                    <div class="relative h-80 w-full">
+                        <canvas id="ttfChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        let myChart = null;
+        let currentStationId = null;
+
+        // --- AUTENTISERING & BRUKERDATA ---
+        async function loginUser() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) return showAlert("Skriv inn et brukernavn.");
+
+            try {
+                // 1. Hent data fra FastAPI (via databasen)
+                const response = await fetch(`/users/${username}`);
+                if (!response.ok) throw new Error("Fant ikke brukeren. Har du opprettet profilen i /docs?");
+                
+                const user = await response.json();
+                
+                // 2. Oppdater UI
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('displayUsername').innerText = user.username;
+                document.getElementById('refreshBtn').disabled = false;
+
+                // 3. Sett stasjoner og bygg favoritt-listen
+                currentStationId = user.default_station;
+                renderFavorites(user.favorites);
+                
+                hideAlert();
+                
+                // 4. Hent værdata og brannrisiko!
+                await fetchRiskData(currentStationId);
+
+            } catch (error) {
+                showAlert(error.message);
+            }
+        }
+
+        // --- FAVORITTER ---
+        function renderFavorites(favoritesStr) {
+            const list = document.getElementById('favoritesList');
+            list.innerHTML = '';
+            
+            if (!favoritesStr) {
+                list.innerHTML = '<li class="text-sm text-slate-500">Ingen favoritter lagret.</li>';
                 return;
             }
-            const userData = await userResponse.json();
-            const stasjonId = userData.default_station;
 
-            // Oppdater nettsiden med stasjonsnavnet
-            document.getElementById("station-name").innerText = `Stasjon: ${stasjonId}`;
-            document.getElementById("result-section").style.display = "block";
-            document.getElementById("ttf-value").innerText = "Beregner...";
-
-            // 2. Hent brannfaren for denne stasjonen
-            const riskResponse = await fetch(`/risk/${stasjonId}`);
-            const riskData = await riskResponse.json();
-
-            if (riskData.error) {
-                document.getElementById("ttf-value").innerText = "Feil: " + riskData.error;
-            } else {
-                // Hent den siste (nyeste) TTF-verdien fra listen
-                const sisteRisiko = riskData.firerisks[riskData.firerisks.length - 1];
-                // Rund av til 2 desimaler
-                document.getElementById("ttf-value").innerText = sisteRisiko.ttf.toFixed(2);
-            }
-        } catch (error) {
-            alert("Det oppstod en feil ved kommunikasjon med serveren.");
-            console.error(error);
+            const favs = favoritesStr.split(',');
+            favs.forEach(stasjon => {
+                const li = document.createElement('li');
+                li.className = "px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 cursor-pointer flex justify-between items-center transition-colors shadow-sm";
+                li.innerHTML = `
+                    <span class="font-medium text-slate-700">${stasjon}</span>
+                    <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+                `;
+                // Gjør at man kan klikke på en favoritt for å bytte stasjon
+                li.onclick = () => fetchRiskData(stasjon);
+                list.appendChild(li);
+            });
         }
-    }
-</script>
 
+        // --- BRANNRISIKO (API) ---
+        async function fetchRiskData(stationId = currentStationId) {
+            if (!stationId) return;
+            currentStationId = stationId;
+
+            document.getElementById('currentStation').innerText = stationId;
+            document.getElementById('stationStatus').innerText = "Henter data...";
+            document.getElementById('stationStatus').classList.remove('text-red-500', 'text-green-600');
+            document.getElementById('stationStatus').classList.add('text-slate-700');
+            document.getElementById('currentTTF').innerText = "...";
+
+            try {
+                // Sender forespørsel til FastAPI som snakker med Frost og kjører frcm-modellen
+                const response = await fetch(`/risk/${stationId}`);
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error.detail || data.error);
+
+                document.getElementById('stationStatus').innerText = "Oppdatert akkurat nå";
+                document.getElementById('stationStatus').classList.replace('text-slate-700', 'text-green-600');
+                
+                const firerisks = data.firerisks;
+                const sisteRisiko = firerisks[firerisks.length - 1];
+                document.getElementById('currentTTF').innerText = sisteRisiko.ttf.toFixed(2);
+
+                updateChart(firerisks);
+                hideAlert();
+
+            } catch (error) {
+                document.getElementById('stationStatus').innerText = "Feil ved henting";
+                document.getElementById('stationStatus').classList.replace('text-slate-700', 'text-red-500');
+                showAlert(error.message);
+            }
+        }
+
+        // --- CHART.JS GRAF ---
+        function updateChart(firerisks) {
+            // Hent ut klokkeslett (labels) og TTF (data) fra modellen
+            const labels = firerisks.map(r => {
+                const date = new Date(r.timestamp);
+                return date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+            });
+            const dataPoints = firerisks.map(r => r.ttf);
+
+            const ctx = document.getElementById('ttfChart').getContext('2d');
+            
+            // Slett den gamle grafen hvis den finnes, før vi tegner en ny
+            if (myChart) myChart.destroy();
+
+            // Settes opp med styling inspirert av koden din
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Time To Flashover (Timer)',
+                        data: dataPoints,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'TTF: ' + context.parsed.y.toFixed(2) + ' timer';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'TTF (Timer)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- HJELPEFUNKSJONER ---
+        function showAlert(msg) {
+            const alertBox = document.getElementById('alertBox');
+            document.getElementById('alertText').innerText = msg;
+            alertBox.classList.remove('hidden');
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>

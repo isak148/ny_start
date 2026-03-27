@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import Session, select
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from app.frost_api import hent_vaerdata
@@ -16,9 +17,11 @@ async def lifespan(app: FastAPI):
     scheduler.start()
     yield
     scheduler.shutdown
-    
+
 #oppretter selve web-applikasjonen
 app = FastAPI(title="Brannrisiko API", version="0.1.0", lifespan=lifespan)
+# Dette forteller FastAPI at den skal servere filene i 'static'-mappen på URL-en '/web'
+app.mount("/web", StaticFiles(directory="src/app/static", html=True), name="static")
 
 #Et veldig enkelt endepunkt for  å teste at serveren lever
 @app.get("/")
