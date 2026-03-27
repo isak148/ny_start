@@ -17,13 +17,14 @@ def hent_vaerdata(station_id: str) -> WeatherData:
     
     naa = datetime.utcnow()
     i_gaar = naa - timedelta(days=1)
-    time_str = f"{i_gaar.isoformat()}/{naa.isoformat()}"
+    time_str = f"{i_gaar.strftime('%Y-%m-%dT%H:%M:%SZ')}/{naa.strftime('%Y-%m-%dT%H:%M:%SZ')}"
 
     #Parametere vi sender til forst API
     parameters = {
         'sources': station_id, 
-        'elements': 'air_temperature,relative_humideity,wind_speed',
+        'elements': 'air_temperature,relative_humidity,wind_speed',
         'referencetime': time_str,
+        'timeresolutions': 'PT1H' # Vi ønsker data med 1 times mellomrom
     }
     
     #Utfør selve API-kallet, og send med client ID som brukernavn (passord er tomt)
@@ -39,7 +40,7 @@ def hent_vaerdata(station_id: str) -> WeatherData:
     datapunkter = []
 
     for item in data:
-        timestamp = datetime.fromisoformat(item['referenceTime'].replace(('Z', '+00:00')))
+        timestamp = datetime.fromisoformat(item['referenceTime'].replace('Z', '+00:00'))
 
         #Variavler for å golde påverienefor dette tidspunktet
         temp = None
@@ -51,7 +52,7 @@ def hent_vaerdata(station_id: str) -> WeatherData:
             element_id = obs['elementId']
             if element_id == 'air_temperature':
                 temp = obs['value']
-            elif element_id == 'relative_humideity':
+            elif element_id == 'relative_humidity':
                 hum = obs['value']
             elif element_id == 'wind_speed':
                 wind = obs['value']
@@ -59,10 +60,10 @@ def hent_vaerdata(station_id: str) -> WeatherData:
         #Vi legger baretil punkter hvis vi har alle tre veridene
         if temp is not None and hum is not None and wind is not None:
             point = WeatherDataPoint(
-            timestamp=timestamp,
-            temperature=temp,
-            humidity=hum,
-            wind_speed=wind
+                timestamp=timestamp,
+                temperature=temp,
+                humidity=hum,
+                wind_speed=wind
             )
             datapunkter.append(point)
 
