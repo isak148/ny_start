@@ -61,7 +61,7 @@ def create_user(user: User, session: Session = Depends(get_session())):
 
     return user
 
-@app.get("/user/{username}")
+@app.get("/users/{username}")
 def get_user(username: str, session: Session = Depends(get_session)):
     """Henter informasjonom en spesifikk bruker"""
     statement = select(User).where(User.username == username)
