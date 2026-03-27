@@ -6,13 +6,16 @@ import uvicorn
 from app.frost_api import hent_vaerdata
 from frcm.fireriskmodel.compute import compute
 from app.database import create_db_and_tables, get_session, User
+from app.scheduler import scheduler
 
 #Dette sørger for at databasen opprettes i det sekundet serveren starter.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     #Kjør kode ved oppstart av serveren
     create_db_and_tables()
+    scheduler.start()
     yield
+    scheduler.shutdown
     
 #oppretter selve web-applikasjonen
 app = FastAPI(title="Brannrisiko API", version="0.1.0", lifespan=lifespan)
@@ -46,7 +49,7 @@ def get_risk(station_id: str):
         return{"error": f"Det oppsto en feil: {str(e)}"}
 
 @app.post("/users/")
-def create_user(user: User, session: Session = Depends(get_session())):
+def create_user(user: User, session: Session = Depends(get_session)):
     """opretter en ny bruker i databasen"""
     #1. Sjekk om brukernavn allerede finnes
     statement = select(User).where(User.username == user.username)

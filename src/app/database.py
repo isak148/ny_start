@@ -7,7 +7,7 @@ class User(SQLModel, table=True):
     username: str = Field(unique=True,index=True)
     email: str = Field(unique=True,index=True)
     password: str
-    default_station: str = "Denne skal væe mulig å endre på sikt." 
+    default_station: str = Field(default="SN18700") #Denne skal være mulig å endre for alle brukere på sikt
 
     # lagrer favoritt-statuser for brukeren, som komma-separert string
     # Eksempel: "SN18700,SN50540,SN90450"

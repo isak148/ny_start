@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brannrisiko Overvåkning</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #d9534f; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        button { background-color: #0275d8; color: white; border: none; cursor: pointer; font-size: 16px; border-radius: 4px; }
+        button:hover { background-color: #025aa5; }
+        .risk-box { margin-top: 20px; padding: 15px; border-left: 5px solid #d9534f; background-color: #fdf2f2; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔥 Brannrisiko Overvåkning</h1>
+    
+    <div id="login-section">
+        <p>Skriv inn brukernavnet ditt for å se brannfaren for din stasjon:</p>
+        <input type="text" id="usernameInput" placeholder="F.eks. Isak">
+        <button onclick="hentBrukerData()">Logg inn / Hent data</button>
+    </div>
+
+    <div id="result-section" class="risk-box">
+        <h2 id="station-name">Stasjon: Laster...</h2>
+        <p><strong>Siste beregnede brannfare (TTF):</strong> <span id="ttf-value">Laster...</span> timer</p>
+    </div>
+</div>
+
+<script>
+    // JavaScript som snakker med din FastAPI-server!
+    async function hentBrukerData() {
+        const username = document.getElementById("usernameInput").value;
+        if (!username) return alert("Skriv inn et brukernavn!");
+
+        try {
+            // 1. Hent brukerens data fra databasen
+            const userResponse = await fetch(`/users/${username}`);
+            if (!userResponse.ok) {
+                alert("Fant ikke brukeren. Har du opprettet den i API-et?");
+                return;
+            }
+            const userData = await userResponse.json();
+            const stasjonId = userData.default_station;
+
+            // Oppdater nettsiden med stasjonsnavnet
+            document.getElementById("station-name").innerText = `Stasjon: ${stasjonId}`;
+            document.getElementById("result-section").style.display = "block";
+            document.getElementById("ttf-value").innerText = "Beregner...";
+
+            // 2. Hent brannfaren for denne stasjonen
+            const riskResponse = await fetch(`/risk/${stasjonId}`);
+            const riskData = await riskResponse.json();
+
+            if (riskData.error) {
+                document.getElementById("ttf-value").innerText = "Feil: " + riskData.error;
+            } else {
+                // Hent den siste (nyeste) TTF-verdien fra listen
+                const sisteRisiko = riskData.firerisks[riskData.firerisks.length - 1];
+                // Rund av til 2 desimaler
+                document.getElementById("ttf-value").innerText = sisteRisiko.ttf.toFixed(2);
+            }
+        } catch (error) {
+            alert("Det oppstod en feil ved kommunikasjon med serveren.");
+            console.error(error);
+        }
+    }
+</script>
+
+</body>
+</html>
