@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from sqlmodel import Session, select
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
@@ -46,7 +46,7 @@ def health_check():
 
 @app.get("/risk/{station_id}")
 @limiter.limit("20/minute")
-def get_risk(station_id: str):
+def get_risk(station_id: str, request: Request):
     try:
         #1. Hent værdata for stasjonen fra forst API
         vaerdata = hent_vaerdata(station_id)
@@ -65,7 +65,8 @@ def get_risk(station_id: str):
         return{"error": f"Det oppsto en feil: {str(e)}"}
 
 @app.post("/users/")
-def create_user(user: User, session: Session = Depends(get_session)):
+@limiter.limit("5/minute")
+def create_user(user: User, request: Request, session: Session = Depends(get_session)):
     """opretter en ny bruker i databasen"""
     #1. Sjekk om brukernavn allerede finnes
     statement = select(User).where(User.username == user.username)
