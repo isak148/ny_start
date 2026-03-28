@@ -17,6 +17,7 @@ dependencies = [
     "requests>=2.33.0",
     "sqlmodel>=0.0.37",
     "apscheduler>=3.11.2",
+    "slowapi>=0.1.9",
 ]
 
 [project.scripts]

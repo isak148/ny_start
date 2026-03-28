@@ -4,10 +4,17 @@ from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 from app.frost_api import hent_vaerdata
 from frcm.fireriskmodel.compute import compute
 from app.database import create_db_and_tables, get_session, User
 from app.scheduler import scheduler
+
+
+limiter = Limiter(key_func = get_remote_address)
 
 #Dette sørger for at databasen opprettes i det sekundet serveren starter.
 @asynccontextmanager
@@ -23,6 +30,11 @@ app = FastAPI(title="Brannrisiko API", version="0.1.0", lifespan=lifespan)
 # Dette forteller FastAPI at den skal servere filene i 'static'-mappen på URL-en '/web'
 app.mount("/web", StaticFiles(directory="src/app/static", html=True), name="static")
 
+app.state.limiter = Limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.mount("/web", StaticFiles(directory = "src/app/static", html=True), name="static")
+
+
 #Et veldig enkelt endepunkt for  å teste at serveren lever
 @app.get("/")
 def read_root():
@@ -33,6 +45,7 @@ def health_check():
     return {"status": "healthy"}
 
 @app.get("/risk/{station_id}")
+@limiter.limit("20/minute")
 def get_risk(station_id: str):
     try:
         #1. Hent værdata for stasjonen fra forst API
@@ -77,6 +90,7 @@ def get_user(username: str, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="fant ingen bruker med dette brukernavnet")
     
     return user 
+
 
 
 if __name__ == "__main__":
