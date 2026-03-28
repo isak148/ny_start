@@ -32,3 +32,10 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.15.8",
 ]
+
+[tool.ruff]
+# Legg til filer eller mapper du vil at Ruff skal ignorere helt
+exclude = [
+    "src/frcm/fireriskmodel/compute.py",
+    "src/frcm/fireriskmodel/preprocess.py"
+]

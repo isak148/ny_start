@@ -1,0 +1,45 @@
+name: FireGuard CI/CD Pipeline
+
+# Dette sier at handlingen skal skje hver gang du pusher til "main" branchen
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # --- CI DELEN: TESTING OG SYNTAKS ---
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sjekk ut koden fra GitHub
+        uses: actions/checkout@v4
+
+      - name: Installer uv (Rask pakkehåndterer)
+        uses: astral-sh/setup-uv@v3
+
+      - name: Sett opp Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer alle avhengigheter
+        run: uv sync
+
+      - name: Syntaks-sjekk med Ruff (Sjekker for feil)
+        run: uv run ruff check .
+
+      - name: Kjør automatiske tester (pytest)
+        run: uv run pytest
+
+  # --- CD DELEN: DEPLOYMENT ---
+  deploy:
+    needs: test # Denne kjører BARE hvis "test" gikk grønt!
+    runs-on: ubuntu-latest
+    # Merk: For at denne faktisk skal koble seg til en ekte server du leier senere, 
+    # må du legge inn SSH-nøkler i GitHub Secrets. Dette er et "mock" oppsett som viser logikken.
+    steps:
+      - name: Deploy til Server (Eksempel)
+        run: |
+          echo "Testene bestod! Her ville serveren automatisk:"
+          echo "1. Git pull origin main"
+          echo "2. docker compose up --build -d"
+          echo "Dette bygger det nye Docker-bildet med de nyeste avhengighetene og restarter appen uten nedetid!"
